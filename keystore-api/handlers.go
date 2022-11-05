@@ -50,3 +50,13 @@ func getValueHandler(ctx echo.Context) error {
 		},
 	)
 }
+
+func deleteValueHandler(ctx echo.Context) error {
+	key := ctx.Param("key")
+
+	if err := deleteValue(key); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, "value deleted")
+}

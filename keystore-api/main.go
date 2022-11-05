@@ -18,7 +18,10 @@ var ErrNoSuchKey = errors.New("no such key")
 
 func main() {
 	engine := echo.New()
+
 	engine.PUT("/:key", putValueHandler)
 	engine.GET("/:key", getValueHandler)
+	engine.DELETE("/:key", deleteValueHandler)
+
 	log.Fatalln(engine.Start(":8080"))
 }
