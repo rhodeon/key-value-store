@@ -4,9 +4,16 @@ import (
 	"errors"
 	"github.com/labstack/echo/v4"
 	"log"
+	"sync"
 )
 
-var store = make(map[string]string)
+var store = struct {
+	sync.RWMutex
+	data map[string]string
+}{
+	data: make(map[string]string),
+}
+
 var ErrNoSuchKey = errors.New("no such key")
 
 func main() {
