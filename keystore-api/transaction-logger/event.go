@@ -1,11 +1,11 @@
-package main
+package transaction_logger
 
 // Event represents a transaction log entry
 type Event struct {
 	sequence  uint64    // unique id
-	eventType EventType // action taken
-	key       string    // key affected by action
-	value     string    // value of a PUT operation
+	EventType EventType // action taken
+	Key       string    // key affected by action
+	Value     string    // value of a PUT operation
 }
 
 type EventType uint64

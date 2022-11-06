@@ -1,4 +1,4 @@
-package main
+package transaction_logger
 
 import (
 	"bufio"
@@ -6,17 +6,7 @@ import (
 	"os"
 )
 
-// transactionLogger is used to write transaction logs
-// of mutating operations to a data source.
-type transactionLogger interface {
-	run()
-	writePut(key string, value string)
-	writeDelete(key string)
-	readEvents() (<-chan Event, <-chan error)
-	err() <-chan error
-}
-
-// transactionLogger implementation with a text file data source.
+// TransactionLogger implementation with a text file data source.
 type fileTransactionLogger struct {
 	events         chan<- Event // write-only channel for sending events
 	errors         <-chan error // read-only channel for receiving errors during write operations
@@ -24,7 +14,7 @@ type fileTransactionLogger struct {
 	file           *os.File     // transaction log file
 }
 
-func newFileTransactionLogger(filename string) (transactionLogger, error) {
+func NewFileTransactionLogger(filename string) (TransactionLogger, error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create transaction log file: %s", err)
@@ -33,7 +23,7 @@ func newFileTransactionLogger(filename string) (transactionLogger, error) {
 	return &fileTransactionLogger{file: file}, nil
 }
 
-func (l *fileTransactionLogger) run() {
+func (l *fileTransactionLogger) Run() {
 	events := make(chan Event, 16)
 	l.events = events
 
@@ -48,7 +38,7 @@ func (l *fileTransactionLogger) run() {
 			_, err := fmt.Fprintf(
 				l.file,
 				"%d\t%d\t%s\t%s\n",
-				l.latestSequence, e.eventType, e.key, e.value,
+				l.latestSequence, e.EventType, e.Key, e.Value,
 			)
 
 			// pass any occurring error to the logger
@@ -61,31 +51,31 @@ func (l *fileTransactionLogger) run() {
 	}()
 }
 
-// writePut sends the event of put operations to the logger.
-func (l *fileTransactionLogger) writePut(key string, value string) {
+// WritePut sends the event of put operations to the logger.
+func (l *fileTransactionLogger) WritePut(key string, value string) {
 	l.events <- Event{
-		eventType: EVENT_TYPE_PUT,
-		key:       key,
-		value:     value,
+		EventType: EVENT_TYPE_PUT,
+		Key:       key,
+		Value:     value,
 	}
 }
 
-// writePut sends the event of delete operations to the logger.
+// WriteDelete sends the event of delete operations to the logger.
 // No value is set for delete.
-func (l *fileTransactionLogger) writeDelete(key string) {
+func (l *fileTransactionLogger) WriteDelete(key string) {
 	l.events <- Event{
-		eventType: EVENT_TYPE_DELETE,
-		key:       key,
+		EventType: EVENT_TYPE_DELETE,
+		Key:       key,
 	}
 }
 
-func (l *fileTransactionLogger) err() <-chan error {
+func (l *fileTransactionLogger) Err() <-chan error {
 	return l.errors
 }
 
-// readEvents() fetches the events from a log file and returns a channel containing them.
+// ReadEvents fetches the events from a log file and returns a channel containing them.
 // An error channel is also returned for any problem that occurs.
-func (l *fileTransactionLogger) readEvents() (<-chan Event, <-chan error) {
+func (l *fileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
 	scanner := bufio.NewScanner(l.file)
 
 	outEvent := make(chan Event)    // to hold events gotten from file
@@ -105,7 +95,7 @@ func (l *fileTransactionLogger) readEvents() (<-chan Event, <-chan error) {
 			if _, err := fmt.Sscanf(
 				line,
 				"%d\t%d\t%s\t%s",
-				&e.sequence, &e.eventType, &e.key, &e.value,
+				&e.sequence, &e.EventType, &e.Key, &e.Value,
 			); err != nil {
 				outError <- fmt.Errorf("input parse error: %w", err)
 				return

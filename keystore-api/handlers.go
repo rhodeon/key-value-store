@@ -17,7 +17,7 @@ func putValueHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	go logger.writePut(key, reqBody.Value)
+	go logger.WritePut(key, reqBody.Value)
 	if err := putValue(key, reqBody.Value); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -55,7 +55,7 @@ func getValueHandler(ctx echo.Context) error {
 func deleteValueHandler(ctx echo.Context) error {
 	key := ctx.Param("key")
 
-	go logger.writeDelete(key)
+	go logger.WriteDelete(key)
 	if err := deleteValue(key); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

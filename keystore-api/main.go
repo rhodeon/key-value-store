@@ -1,6 +1,7 @@
 package main
 
 import (
+	transactionLogger "cloud-native-go/keystore-api/transaction-logger"
 	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
@@ -14,7 +15,7 @@ var store = struct {
 }{
 	data: make(map[string]string),
 }
-var logger transactionLogger
+var logger transactionLogger.TransactionLogger
 
 var ErrNoSuchKey = errors.New("no such key")
 
@@ -35,28 +36,28 @@ func main() {
 func initializeTransactionLogger() error {
 	var err error
 
-	logger, err = newFileTransactionLogger("transactions.log")
+	logger, err = transactionLogger.NewFileTransactionLogger("transactions.log")
 	if err != nil {
 		return fmt.Errorf("failed to create Event logger: %w", err)
 	}
 
-	event, errs := logger.readEvents()
-	e, ok := Event{}, true
+	event, errs := logger.ReadEvents()
+	e, ok := transactionLogger.Event{}, true
 
 	for ok && err == nil {
 		select {
 		case err, ok = <-errs:
 		case e, ok = <-event:
-			switch e.eventType {
-			case EVENT_TYPE_PUT:
-				err = putValue(e.key, e.value)
+			switch e.EventType {
+			case transactionLogger.EVENT_TYPE_PUT:
+				err = putValue(e.Key, e.Value)
 
-			case EVENT_TYPE_DELETE:
-				err = deleteValue(e.key)
+			case transactionLogger.EVENT_TYPE_DELETE:
+				err = deleteValue(e.Key)
 			}
 		}
 	}
 
-	logger.run()
+	logger.Run()
 	return err
 }
