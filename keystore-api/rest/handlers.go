@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cloud-native-go/keystore-api/common"
 	"errors"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -18,7 +19,7 @@ func putValueHandler(ctx echo.Context) error {
 	}
 
 	go logger.WritePut(key, reqBody.Value)
-	if err := putValue(key, reqBody.Value); err != nil {
+	if err := store.PutValue(key, reqBody.Value); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -33,10 +34,10 @@ func putValueHandler(ctx echo.Context) error {
 func getValueHandler(ctx echo.Context) error {
 	key := ctx.Param("key")
 
-	value, err := getValue(key)
+	value, err := store.GetValue(key)
 	if err != nil {
 		switch {
-		case errors.Is(err, ErrNoSuchKey):
+		case errors.Is(err, common.ErrNoSuchKey):
 			return echo.NewHTTPError(http.StatusNotFound, "key not found")
 
 		default:
@@ -56,7 +57,7 @@ func deleteValueHandler(ctx echo.Context) error {
 	key := ctx.Param("key")
 
 	go logger.WriteDelete(key)
-	if err := deleteValue(key); err != nil {
+	if err := store.DeleteValue(key); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

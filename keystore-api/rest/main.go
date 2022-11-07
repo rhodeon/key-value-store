@@ -1,23 +1,17 @@
 package main
 
 import (
-	transactionLogger "cloud-native-go/keystore-api/transaction-logger"
-	"errors"
+	"cloud-native-go/keystore-api/common"
+	"cloud-native-go/keystore-api/common/transaction-logger"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"log"
-	"sync"
 )
 
-var store = struct {
-	sync.RWMutex
-	data map[string]string
-}{
-	data: make(map[string]string),
+var store = common.Store{
+	Data: make(map[string]string),
 }
-var logger transactionLogger.TransactionLogger
-
-var ErrNoSuchKey = errors.New("no such key")
+var logger transaction_logger.TransactionLogger
 
 func main() {
 	if err := initializeTransactionLogger(); err != nil {
@@ -36,24 +30,24 @@ func main() {
 func initializeTransactionLogger() error {
 	var err error
 
-	logger, err = transactionLogger.NewFileTransactionLogger("transactions.log")
+	logger, err = transaction_logger.NewFileTransactionLogger("transactions.log")
 	if err != nil {
 		return fmt.Errorf("failed to create Event logger: %w", err)
 	}
 
 	event, errs := logger.ReadEvents()
-	e, ok := transactionLogger.Event{}, true
+	e, ok := transaction_logger.Event{}, true
 
 	for ok && err == nil {
 		select {
 		case err, ok = <-errs:
 		case e, ok = <-event:
 			switch e.EventType {
-			case transactionLogger.EVENT_TYPE_PUT:
-				err = putValue(e.Key, e.Value)
+			case transaction_logger.EVENT_TYPE_PUT:
+				err = store.PutValue(e.Key, e.Value)
 
-			case transactionLogger.EVENT_TYPE_DELETE:
-				err = deleteValue(e.Key)
+			case transaction_logger.EVENT_TYPE_DELETE:
+				err = store.DeleteValue(e.Key)
 			}
 		}
 	}
