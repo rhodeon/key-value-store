@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cloud-native-go/keystore-api/common"
+	"cloud-native-go/common"
 	"errors"
 	"github.com/labstack/echo/v4"
 	"net/http"

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cloud-native-go/keystore-api/common"
-	"cloud-native-go/keystore-api/grpc/pb"
+	"cloud-native-go/common"
+	"cloud-native-go/grpc/pb"
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
